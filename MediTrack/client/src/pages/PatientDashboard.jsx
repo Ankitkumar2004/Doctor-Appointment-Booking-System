@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import AuthContext from '../context/AuthContext';
 
 const PatientDashboard = () => {
@@ -20,7 +20,7 @@ const PatientDashboard = () => {
     const fetchAppointments = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/appointments', {
+            const res = await api.get('/api/appointments', {
                 headers: { 'x-auth-token': token }
             });
             setAppointments(res.data);
@@ -33,7 +33,7 @@ const PatientDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/appointments', formData, {
+            await api.post('/api/appointments', formData, {
                 headers: { 'x-auth-token': token }
             });
             setMessage('Appointment booked successfully!');

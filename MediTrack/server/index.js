@@ -9,7 +9,10 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ['https://ca-doctor.onrender.com', 'http://localhost:5173'],
+    credentials: true
+}));
 
 // Database Connection
 connectDB();

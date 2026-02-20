@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import AuthContext from '../context/AuthContext';
 
 const DoctorDashboard = () => {
@@ -13,7 +13,7 @@ const DoctorDashboard = () => {
     const fetchAppointments = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/appointments', {
+            const res = await api.get('/api/appointments', {
                 headers: { 'x-auth-token': token }
             });
             setAppointments(res.data);
@@ -25,7 +25,7 @@ const DoctorDashboard = () => {
     const handleStatusUpdate = async (id, status) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/appointments/${id}`, { status }, {
+            await api.put(`/api/appointments/${id}`, { status }, {
                 headers: { 'x-auth-token': token }
             });
             fetchAppointments();
@@ -35,7 +35,7 @@ const DoctorDashboard = () => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
+        <div className="space-y-8 animate-fade-in-up ">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-800">Doctor's Portal</h1>
