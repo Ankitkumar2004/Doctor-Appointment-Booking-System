@@ -2,9 +2,22 @@ import { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import AuthContext from '../context/AuthContext';
 
+const STATUS_STYLES = {
+    approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    rejected: 'bg-red-50 text-red-700 border-red-200',
+};
+
+const DOT_STYLES = {
+    approved: 'bg-emerald-500',
+    pending: 'bg-amber-400',
+    rejected: 'bg-red-500',
+};
+
 const DoctorDashboard = () => {
     const { user } = useContext(AuthContext);
     const [appointments, setAppointments] = useState([]);
+    const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         fetchAppointments();
@@ -34,102 +47,129 @@ const DoctorDashboard = () => {
         }
     };
 
+    const pending = appointments.filter(a => a.status === 'pending').length;
+    const approved = appointments.filter(a => a.status === 'approved').length;
+    const rejected = appointments.filter(a => a.status === 'rejected').length;
+
+    const filtered = filter === 'all' ? appointments : appointments.filter(a => a.status === filter);
+
     return (
-        <div className="space-y-8 animate-fade-in-up ">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-slate-800">Doctor's Portal</h1>
-                    <p className="text-slate-500 mt-2 font-medium">Manage your schedule and patient requests efficienty.</p>
+        <div className="space-y-8 animate-fade-in-up">
+            {/* Header */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-teal-700 to-emerald-600 rounded-2xl p-8 text-white shadow-xl">
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <p className="text-teal-200 text-sm font-semibold uppercase tracking-widest mb-1">Doctor's Portal</p>
+                        <h1 className="text-3xl font-extrabold">Good day, Dr. {user?.name} 🩺</h1>
+                        <p className="text-teal-100 text-sm mt-2">Manage and respond to your patient appointment requests.</p>
+                    </div>
+                    <div className="bg-white/15 backdrop-blur-sm px-5 py-3 rounded-xl flex items-center gap-2.5">
+                        <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-bold">Live — Online</span>
+                    </div>
                 </div>
-                <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-bold text-slate-700">Live Status: Online</span>
-                </div>
+                <div className="absolute -top-8 -right-8 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-                <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-800">Appointment Requests</h2>
-                        <p className="text-slate-500 text-sm mt-1">Review and manage patient bookings</p>
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: 'Total', value: appointments.length, color: 'text-teal-600', bg: 'bg-teal-50' },
+                    { label: 'Pending', value: pending, color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: 'Approved', value: approved, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: 'Rejected', value: rejected, color: 'text-red-500', bg: 'bg-red-50' },
+                ].map(({ label, value, color, bg }) => (
+                    <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+                        <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
+                        <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mt-1">{label}</p>
                     </div>
-                    <span className="bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg shadow-indigo-200">
-                        {appointments.length} Active Requests
-                    </span>
+                ))}
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-800">Appointment Requests</h2>
+                        <p className="text-slate-500 text-sm mt-0.5">Review and take action on patient bookings</p>
+                    </div>
+                    {/* Filter */}
+                    <div className="flex gap-2 flex-wrap">
+                        {['all', 'pending', 'approved', 'rejected'].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize border transition-all ${filter === f
+                                        ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:border-teal-300'
+                                    }`}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-100">
-                                <th className="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient Details</th>
-                                <th className="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Department</th>
-                                <th className="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Schedule</th>
-                                <th className="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <tr className="bg-slate-50 border-b border-slate-100">
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Department</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Schedule</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {appointments.map((appt) => (
-                                <tr key={appt._id} className="hover:bg-indigo-50/30 transition-colors group">
-                                    <td className="px-8 py-6 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-12 w-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">
+                        <tbody className="divide-y divide-slate-50">
+                            {filtered.map((appt) => (
+                                <tr key={appt._id} className="hover:bg-teal-50/30 transition-colors">
+                                    <td className="px-6 py-5 whitespace-nowrap">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">
                                                 {appt.patientName.charAt(0)}
                                             </div>
-                                            <div className="ml-4">
-                                                <div className="text-base font-bold text-slate-800">{appt.patientName}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5">Patient ID: #{appt._id.slice(-6)}</div>
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-800">{appt.patientName}</p>
+                                                <p className="text-xs text-slate-400">#{appt._id.slice(-6)}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6 whitespace-nowrap">
-                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                    <td className="px-6 py-5 whitespace-nowrap">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100">
                                             {appt.department}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-6 whitespace-nowrap">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-slate-800 text-sm">{appt.date}</span>
-                                            <span className="text-indigo-600 text-xs font-bold mt-1 bg-indigo-50 px-2 py-0.5 rounded w-fit">{appt.timeSlot}</span>
-                                        </div>
+                                    <td className="px-6 py-5 whitespace-nowrap">
+                                        <p className="text-sm font-bold text-slate-800">{appt.date}</p>
+                                        <p className="text-xs text-teal-600 font-semibold mt-0.5">{appt.timeSlot}</p>
                                     </td>
-                                    <td className="px-8 py-6 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border
-                                            ${appt.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : ''}
-                                            ${appt.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-100' : ''}
-                                            ${appt.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : ''}
-                                        `}>
-                                            <span className={`w-2 h-2 rounded-full mr-2
-                                                ${appt.status === 'approved' ? 'bg-emerald-500' : ''}
-                                                ${appt.status === 'pending' ? 'bg-amber-500' : ''}
-                                                ${appt.status === 'rejected' ? 'bg-red-500' : ''}
-                                            `}></span>
+                                    <td className="px-6 py-5 whitespace-nowrap">
+                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${STATUS_STYLES[appt.status] || ''}`}>
+                                            <span className={`w-2 h-2 rounded-full ${DOT_STYLES[appt.status] || ''}`}></span>
                                             {appt.status.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-6 whitespace-nowrap text-sm font-medium">
+                                    <td className="px-6 py-5 whitespace-nowrap">
                                         {appt.status === 'pending' ? (
-                                            <div className="flex items-center gap-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleStatusUpdate(appt._id, 'approved')}
-                                                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5"
-                                                    title="Approve Appointment"
+                                                    className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all hover:-translate-y-0.5"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                                     Approve
                                                 </button>
                                                 <button
                                                     onClick={() => handleStatusUpdate(appt._id, 'rejected')}
-                                                    className="flex items-center gap-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:border-red-300"
-                                                    title="Reject Appointment"
+                                                    className="flex items-center gap-1 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                                                     Reject
                                                 </button>
                                             </div>
                                         ) : (
-                                            <span className="text-slate-400 text-xs font-medium italic">Action Completed</span>
+                                            <span className="text-slate-400 text-xs font-medium italic">Completed</span>
                                         )}
                                     </td>
                                 </tr>
@@ -137,13 +177,16 @@ const DoctorDashboard = () => {
                         </tbody>
                     </table>
                 </div>
-                {appointments.length === 0 && (
+
+                {filtered.length === 0 && (
                     <div className="text-center py-20">
-                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                            <svg className="w-10 h-10 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">No Pending Requests</h3>
-                        <p className="text-slate-500 mt-2">All caught up! Check back later for new appointments.</p>
+                        <h3 className="text-lg font-bold text-slate-800">No Requests Found</h3>
+                        <p className="text-slate-500 mt-1 text-sm">
+                            {filter === 'all' ? 'No appointments yet. Check back later.' : `No ${filter} appointments to show.`}
+                        </p>
                     </div>
                 )}
             </div>

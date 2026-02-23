@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://ca-doctor-backend.onrender.com', // Deployed backend URL
+    baseURL: 'http://localhost:5000', // Local backend
 });
 
 export default api;
